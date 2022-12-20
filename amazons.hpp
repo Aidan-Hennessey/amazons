@@ -1,3 +1,5 @@
+#ifndef AMAZONS_H
+#define AMAZONS_H
 // This is a header file with some micscellaneous types
 // that are used throughout the project
 
@@ -38,15 +40,13 @@ class Point {
     void incr_row() {row++;}
     void incr_col() {col++;}
 
-    static inline int rowcol_to_val(int row, int col) {
-        return 12 * row + col;
-    }
+    bool equals(Point other) {return row == other.get_row() && col == other.get_col();}
+
+    static inline int rowcol_to_val(int row, int col) {return 12 * row + col;}
 
     // calculates the index of the bitboard bit associated with the tile 
     // represented by this point
-    int to_bbval() {
-        return rowcol_to_val(row, col);
-    }
+    int to_bbval() {return rowcol_to_val(row, col);}
 };
 
 /*
@@ -57,3 +57,5 @@ class Point {
  *     right_ai - whether the right player is an AI
  */
 void play_game(bool left_ai, bool right_ai);
+
+#endif

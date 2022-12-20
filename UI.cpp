@@ -21,19 +21,11 @@
  * Returns: the character entered by the user
  */
 char start_screen() {
-    // Initialize ncurses
-    initscr();
-    cbreak();
-    noecho();
-    timeout(0);
-
-    char c;
-
     // print title screen
     printf("      __ _  _  _   __ _ ____  ___  _ ___  ___| |\n");
     printf("     / _` |/ \\/ \\ / _` |\\  _|/ _ \\| `_  \\/ __| |\n");
     printf("    | (_| | |\\/| | (_| |_\\ \\| (_) | | | |__  |_|\n");
-    printf("     \\__,_|_|  |_|\\__,_|____\\___/|_| | |___/(_)\n\n");
+    printf("     \\__,_|_|  |_|\\__,_|____\\\\___/|_| | |___/(_)\n\n");
     printf("Welcome to the game of amazons\n");
     printf("To read the rules of the game, press 'r'\n");
     printf("To play a two player game, press 't'\n");
@@ -42,11 +34,9 @@ char start_screen() {
     printf("To exit the app, press any other key\n");
 
     // get char
-    while(true) {
-        c = getch();
-        if(c != ERR)
-            return c;
-    }
+    char buf[BUFLEN];
+    fgets(buf, BUFLEN - 1, stdin);
+    return buf[0];
 }
 
 /*
@@ -64,14 +54,14 @@ void print_board(char board[10][10]) {
     printf("%c - player 2 amazon\n", tile_icon(ramazon));
     printf("%c - burnt square\n\n", tile_icon(burnt));
 
-    printf("   1 2 3 4 5 6 7 8 9 10\n");
-    printf("  +-+-+-+-+-+-+-+-+-+-+\n"); //top of board
+    printf("    A   B   C   D   E   F   G   H   I   J\n");
+    printf("  +---+---+---+---+---+---+---+---+---+---+\n"); //top of board
     for(int i=1; i <= 10; i++) {
-        printf("%2i|", i);
+        printf("%2i|", 11 - i);
         for(int j=1; j <= 10; j++) {
-            printf("%c|", board[i][j]);
+            printf(" %c |", board[i-1][j-1]);
         }
-        printf("\n  +-+-+-+-+-+-+-+-+-+-+\n");
+        printf("\n  +---+---+---+---+---+---+---+---+---+---+\n");
     }
 }
 
@@ -81,18 +71,49 @@ void exit_app() {
     exit(0);
 }
 
-// Prints a message declaring the victor
+/*
+ * Prints a message declaring the victor
+ *                                        _
+ *   ___ | | __ _ __    __ ___  _ __    /_ |
+ *  /   \| |/ _` |\ \  / // _ \| `__|    | |
+ * | (_) | | (_| | \ \/ /|  __|| |      _| |_
+ * | ,__/|_|\__,_|  \  /  \___||_|     |_____|
+ * | |              / /
+ *  _  _  _  ___  _ __ | |
+ * | |/ \| |/ _ \| `_ \| |
+ * | | | | | (_) | | | |_|
+ *  \_/ \_/ \___/|_| |_(_)
+ *
+ * Params:
+ *     loser - the player who lost the game
+ * Return: none
+ */
 void game_over(player_t loser) {
-    if(loser == left) {
-        printf("Player 2 won!\n\n\n");
-    } else {
-        printf("Player 1 won!\n\n\n");
+    if(loser == left) { //player 2 won
+        printf("\n\n                                       ____\n");
+        printf("   ___ | | __ _ __    __ ___  _ __    |__  \\\n");
+        printf("  /   \\| |/ _` |\\ \\  / // _ \\| `__|      | /\n");
+        printf(" | (_) | | (_| | \\ \\/ /|  __|| |        / /__\n");
+        printf(" | ,__/|_|\\__,_|  \\  /  \\___||_|       /____/\n");
+        printf(" | |              / /\n");
+    } else { // player 1 won
+        printf("                                        _\n");
+        printf("   ___ | | __ _ __    __ ___  _ __    /_ |\n");
+        printf("  /   \\| |/ _` |\\ \\  / // _ \\| `__|    | |\n");
+        printf(" | (_) | | (_| | \\ \\/ /|  __|| |      _| |_\n");
+        printf(" | ,__/|_|\\__,_|  \\  /  \\___||_|     |_____|\n");
+        printf(" | |              / /\n");
     }
+    printf("  _  _  _  ___  _ __ | |\n");
+    printf(" | |/ \\| |/ _ \\| `_ \\| |\n");
+    printf(" | | | | | (_) | | | |_|\n");
+    printf("  \\_/ \\_/ \\___/|_| |_(_)\n\n\n");
 }
 
 /*
  * Tokenizes the buffer, filling the tokens array with pointers to the starts
- * of the tokens. Returns the number of tokens
+ * of the tokens. Returns the number of tokens.
+ * With correct input, each token will be a move (letternumber)
  *
  * Params: 
  *     buffer: a char array representing user input
@@ -101,17 +122,16 @@ void game_over(player_t loser) {
  *     an int - the number of tokens found by the parser
  */
 int parse(char buffer[BUFLEN], char *tokens[BUFLEN / 2]) {
-    // TODO: write your code here
     int location = 0;
     int size;
     int token_index = 0;
     
     while(1) {
-        location += strspn(&buffer[location], "\t\n ,");
+        location += strspn(&buffer[location], "\t\n ,-()");
 
         if(buffer[location] == '\0') break;
         else {
-            size = strcspn(&buffer[location], " \t\n,");
+            size = strcspn(&buffer[location], " \t\n,-()");
             buffer[location + size] = '\0';
             tokens[token_index++] = &buffer[location];
             location += size + 1;
@@ -122,19 +142,27 @@ int parse(char buffer[BUFLEN], char *tokens[BUFLEN / 2]) {
 
 /*
  * Helper for human_move()
- * Takes tokenized input from the user and fills a point object from it
+ * Takes a move token and fills a point object from it
  * Returns 0 on success, -1 on error
  *
  * Params:
- *     tokens - the two tokens returned from the parser
- *     location - the point object in which we will store the user input
+ *     token - the move token to convert
+ *     location - the point object in which we will store the square
  */
-int point_from_user_input(char *tokens[], Point& location) {
-    int row = atoi(tokens[0]);
-    int col = atoi(tokens[1]);
+int move_from_user_input(char *token, Point& location) {
+    int row;
+    int col;
 
-    if(row > 10 || row < 1) return -1;
-    if(col > 10 || col < 1) return -1;
+    if(int(token[0]) > 0x60) { //lowercase letter
+        col = int(token[0]) - 0x60; // a->1, b->2, etc
+    } else { //uppercase letter
+        col = int(token[0]) - 0x40; // A->1, B->2, etc
+    }
+
+    row = 11 - atoi(&token[1]); // flipping from 1=bottom to 1=top
+
+    if(row < 1 || row > 10) return -1;
+    if(col < 1 || col > 10) return -1;
 
     location.set_row(row);
     location.set_col(col);
@@ -142,7 +170,17 @@ int point_from_user_input(char *tokens[], Point& location) {
     return 0;
 }
 
-void human_move(Board board, player_t current_player) {
+/*
+ * The routine for a human move. Gets moves from the user until one is valid 
+ * and then makes that move
+ *
+ * Params:
+ *     board - the current board. Used to determine if moves are legal, and
+ *             is mutated to make the current move
+ *     current_player - whose turn it is (player1/left or player2/right)
+ * Return: None
+ */
+void human_move(Board& board, player_t current_player) {
     char buf[BUFLEN] = {};
     char *tokens[BUFLEN/2];
     int num_tokens;
@@ -151,59 +189,30 @@ void human_move(Board board, player_t current_player) {
     Point arrow;
 
     while(true) {
-        // select the amazon to move
-        printf("Please enter the coordinates of the amazon you would like to move.\n");
-        printf("Format: row #, comma, space, row #. Example: '6, 7'.\n");
+        // get move from user
+        printf("Player %i, please enter your move.\n", (current_player == left) ? 1 : 2);
+        printf("Format: start - end (arrow). Example: 'A4 - A7 (C5)'.\n");
         printf("Your move: ");
         fflush(stdout);
         fgets(buf, BUFLEN - 1, stdin);
 
+        // parse input
         num_tokens = parse(buf, tokens);
-        if(num_tokens != 2) {
+        if(num_tokens != 3) {
             printf("Invalid input. Please try again.\n");
             continue;
         }
 
-        if(point_from_user_input(tokens, old_loc)) { 
-            // if the function fails
+        // convert input to point objects
+        if(move_from_user_input(tokens[0], old_loc) || 
+            move_from_user_input(tokens[1], new_loc) ||
+            move_from_user_input(tokens[2], arrow)) { 
+            // if 1 or more failed
             printf("Invalid input. Please try again.\n");
             continue;
         }
 
-        // select the amazon's new location
-        printf("now enter the coordinates you would like her to move to: ");
-        fflush(stdout);
-        fgets(buf, BUFLEN - 1, stdin);
-
-        num_tokens = parse(buf, tokens);
-        if(num_tokens != 2) {
-            printf("Invalid input. Please try again.\n");
-            continue;
-        }
-
-        if(point_from_user_input(tokens, new_loc)) { 
-            // if the function fails
-            printf("Invalid input. Please try again.\n");
-            continue;
-        }
-
-        // select the arrow's location
-        printf("finally, enter the coordinates of the square you would like to burn: ");
-        fflush(stdout);
-        fgets(buf, BUFLEN - 1, stdin);
-
-        num_tokens = parse(buf, tokens);
-        if(num_tokens != 2) {
-            printf("Invalid input. Please try again.\n");
-            continue;
-        }
-
-        if(point_from_user_input(tokens, arrow)) { 
-            // if the function fails
-            printf("Invalid input. Please try again.\n");
-            continue;
-        }
-
+        // make user's move
         if(board.make_move(current_player, old_loc, new_loc, arrow))
             break;
         else {

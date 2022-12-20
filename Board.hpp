@@ -1,7 +1,16 @@
+#ifndef BOARD_H
+#define BOARD_H
+
 #include <bitset>
+#include "amazons.hpp"
+
+#define has_amazon(p, v) ((p == left) ? left_amazons[v] : right_amazons[v])
+#define flip_amazon(p, v) ((p == left) ? left_amazons.flip(v) : right_amazons.flip(v))
+#define abs(a) ((a < 0) ? -a : a)
+#define max(a, b) ((a > b) ? a : b)
 
 /*
- * the board, internally represented as 3 bitboard - one for occupied squares, 
+ * the board, internally represented as 3 bitboards - one for occupied squares, 
  * and one for each player's set of amazons
  */
 class Board {
@@ -11,6 +20,19 @@ class Board {
 
     public:
     Board();
+
+    /*
+     * helper for move_is_legal()
+     * determines whether a chess queen could move from start to end
+     *
+     * Params:
+     *     start - the starting position of the queen
+     *     end - the queen's target square
+     *
+     * Returns:
+     *     a bool - false if not a straight line or if there is an impediment, true otherwise
+     */
+    bool queen_connected(Point start, Point end);
 
     /*
      * Determines whether a given move is legal
@@ -69,3 +91,5 @@ class Board {
      */
     void print();
 };
+
+#endif

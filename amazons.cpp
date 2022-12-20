@@ -4,6 +4,8 @@
 #include "Board.hpp"
 #include "UI.hpp"
 
+#ifndef TESTS
+
 int main() {
     char action;
 
@@ -25,6 +27,8 @@ int main() {
     return 0;
 }
 
+#endif
+
 /*
  * Gets and makes moves from each player until someone can't go
  *
@@ -37,6 +41,8 @@ void play_game(bool left_ai, bool right_ai) {
     player_t current_player = left; //left goes first
 
     while(!board.no_moves(current_player)) {
+        board.print();
+
         if((current_player == left) ? left_ai : right_ai) { // if it's an ai's turn
             //TODO
         } else { // it's a human's turn

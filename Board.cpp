@@ -3,15 +3,12 @@
 #include "Board.hpp"
 #include "UI.hpp"
 
-#define has_amazon(p, v) (p == left) ? left_amazons[v] : right_amazons[v]
-#define flip_amazon(p, v) (p == left) ? left_amazons.flip(v) : right_amazons.flip(v)
-#define abs(a) (a < 0) ? -a : a
-
 Board::Board() {
     //fill border with 1's
     for(int i=0; i < 144; i++) {
         if(i < 12 || i >= 132 || i % 12 == 0 || i % 12 == 11) //is on border
             occupied.set(i);
+        else(occupied.reset(i));
     }
     //fill left and right starting positions
     left_amazons.set(16);
@@ -39,19 +36,21 @@ Board::Board() {
  * Returns:
  *     a bool - false if not a straight line or if there is an impediment, true otherwise
  */
-bool queen_connected(Point start, Point end) {
+bool Board::queen_connected(Point start, Point end) {
     int start_index = start.to_bbval();
     int incr;
 
-    int hori_move_dist = amazon_start.get_col() - amazon_finish.get_col();
-    int vert_move_dist = amazon_start.get_row() - amazon_finish.get_row();
+    int hori_move_dist = end.get_col() - start.get_col();
+    int vert_move_dist = end.get_row() - start.get_row();
 
-    if(abs(hori_move_dist) != abs(vert_move_dist) && hori_move_dist * vert_move_dist != 0)
+    if((abs(hori_move_dist)) != (abs(vert_move_dist)) && hori_move_dist * vert_move_dist != 0)
         return false; // path is not straight line
+
+    int dist = max(abs(hori_move_dist), abs(vert_move_dist));
 
     if(hori_move_dist > 0 && vert_move_dist > 0)
         incr = 13;
-    if(hori_move_dist > 0 && vert_move_dist = 0)
+    if(hori_move_dist > 0 && vert_move_dist == 0)
         incr = 1;
     if(hori_move_dist > 0 && vert_move_dist < 0)
         incr = -11;
@@ -63,14 +62,16 @@ bool queen_connected(Point start, Point end) {
         incr = -12;
     if(hori_move_dist < 0 && vert_move_dist > 0)
         incr = 11;
-    if(hori_move_dist < 0 && vert_move_dist = 0)
+    if(hori_move_dist < 0 && vert_move_dist == 0)
         incr = -1;
     if(hori_move_dist < 0 && vert_move_dist < 0)
         incr = -13;
 
-    for(int i=1; i <= hori_move_dist; i++) {
-        if(occupied[start_index + incr * i])
+    for(int i=1; i <= dist; i++) {
+        if(occupied[start_index + incr * i]) {
+            Point occupied_point(start_index + incr * i);
             return false; // path is obstructed
+        }
     }
 
     return true;
@@ -88,10 +89,16 @@ bool queen_connected(Point start, Point end) {
  *     a bool - true if the move is legal, false otherwise
  */
 bool Board::move_is_legal(player_t player, Point amazon_start, Point amazon_finish, Point arrow) {
-    if(!has_amazons(player, start)) // player does not have amazon there
+    bool legal;
+    int start_index = amazon_start.to_bbval();
+
+    if(!has_amazon(player, start_index)) // player does not have amazon there
         return false;
 
-    return queen_connected(amazon_start, amazon_finish) && queen_connected(amazon_finish, arrow);
+    occupied.flip(start_index); // so it doesn't think the queen's old position is blocking the arrow
+    legal = queen_connected(amazon_start, amazon_finish) && queen_connected(amazon_finish, arrow);
+    occupied.flip(start_index); // so that this method doesn't mutate the board
+    return legal;
 }
 
 /*
@@ -112,13 +119,13 @@ bool Board::make_move(player_t player, Point amazon_start, Point amazon_finish, 
 
     int start = amazon_start.to_bbval();
     int finish = amazon_finish.to_bbval();
-    int arrow = arrow.to_bbval();
+    int to_burn = arrow.to_bbval();
 
     flip_amazon(player, start);
     flip_amazon(player, finish);
     occupied.reset(start);
     occupied.set(finish);
-    occupied.set(finish);
+    occupied.set(to_burn);
 
     return true;
 }
@@ -135,7 +142,7 @@ bool Board::no_moves(player_t player) {
     // the increments to get to adjacent squares
     int incrs[8] = {-13, -12, -11, -1, 1, 11, 12, 13}; 
 
-    for(i=13; i<=130; i++) // for each square on the board
+    for(int i=13; i<=130; i++) // for each square on the board
         if(has_amazon(player, i)) // if this player has an amazon there
             for(int j=0; j < 8; j++) // look at all the adjacent squares
                 if(!occupied[i+incrs[j]]) // if one is unoccupied
@@ -172,7 +179,7 @@ void Board::print() {
 
     for(int i=1; i<=10; i++) {
         for(int j=1; j<=10; j++) {
-            non_bit_board[i][j] = tile_icon(this->get_tile_type(Point.rowcol_to_val(i, j)));
+            non_bit_board[i-1][j-1] = tile_icon(this->get_tile_type(Point::rowcol_to_val(i, j)));
         }
     }
 
