@@ -26,6 +26,9 @@ int main() {
             case 's':
                 play_game(true, false);
                 break;
+            case 'w':
+                play_game(true, true);
+                break;
             default:
                 exit_app();
         }
@@ -46,12 +49,15 @@ int main() {
 void play_game(bool left_ai, bool right_ai) {
     Board board;
     player_t current_player = left; //left goes first
+    move_t bot_move;
 
     while(!board.no_moves(current_player)) {
+        board.evaluate_verbose();
         board.print();
 
         if((current_player == left) ? left_ai : right_ai) { // if it's an ai's turn
-            ai_move(board, current_player);
+            bot_move = ai_move(board, current_player);
+            bot_move_recognition(board, bot_move);
         } else { // it's a human's turn
             human_move(board, current_player);
         }

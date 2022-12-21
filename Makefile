@@ -10,7 +10,7 @@ amazons: $(depens)
 	$(cc) ${ccflags} $^ -o $@
 
 tests: $(depens) tests.cpp
-	$(cc) ${ccflags} -TESTS $^ -o $@
+	$(cc) ${ccflags} -DTESTS $^ -o $@
 
 clean:
 	/bin/rm -f *.o $(all)

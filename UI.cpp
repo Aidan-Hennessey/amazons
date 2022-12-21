@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,16 +23,17 @@
  */
 char start_screen() {
     // print title screen
-    printf("      __ _  _  _   __ _ ____  ___  _ ___  ___| |\n");
+    printf("\n\n\n\n\n      __ _  _  _   __ _ ____  ___  _ ___  ___| |\n");
     printf("     / _` |/ \\/ \\ / _` |\\  _|/ _ \\| `_  \\/ __| |\n");
     printf("    | (_| | |\\/| | (_| |_\\ \\| (_) | | | |__  |_|\n");
-    printf("     \\__,_|_|  |_|\\__,_|____\\\\___/|_| | |___/(_)\n\n");
-    printf("Welcome to the game of amazons\n");
+    printf("     \\__,_|_|  |_|\\__,_|____\\\\___/|_| | |___/(_)\n\n\n\n\n\n");
+    printf("Welcome to the game of amazons\n\n");
     printf("To read the rules of the game, press 'r'\n");
     printf("To play a two player game, press 't'\n");
     printf("To play moving first against an AI, press 'f'\n");
     printf("To play moving second against an AI, press 's'\n");
-    printf("To exit the app, press any other key\n");
+    printf("To watch the AI play against itself, press 'w'\n");
+    printf("To exit the app, press any other key\n\n");
 
     // get char
     char buf[BUFLEN];
@@ -89,6 +91,8 @@ void exit_app() {
  * Return: none
  */
 void game_over(player_t loser) {
+    char buf[BUFLEN];
+
     if(loser == left) { //player 2 won
         printf("\n\n                                       ____\n");
         printf("   ___ | | __ _ __    __ ___  _ __    |__  \\\n");
@@ -108,6 +112,9 @@ void game_over(player_t loser) {
     printf(" | |/ \\| |/ _ \\| `_ \\| |\n");
     printf(" | | | | | (_) | | | |_|\n");
     printf("  \\_/ \\_/ \\___/|_| |_(_)\n\n\n");
+
+    printf("Press enter to return to the home screen\n\n\n");
+    read(0, buf, BUFLEN);
 }
 
 /*
@@ -161,8 +168,6 @@ int move_from_user_input(char *token, Point& location) {
 
     row = 11 - atoi(&token[1]); // flipping from 1=bottom to 1=top
 
-    printf("row: %i    col: %i\n", row, col);
-
     if(row < 1 || row > 10) return -1;
     if(col < 1 || col > 10) return -1;
 
@@ -199,7 +204,6 @@ void human_move(Board& board, player_t current_player) {
         // parse input
         num_tokens = parse(buf, tokens);
         if(num_tokens != 3) {
-            printf("num_tokens: %i\n", num_tokens);
             printf("Invalid input. Please try again.\n");
             continue;
         }
@@ -221,4 +225,30 @@ void human_move(Board& board, player_t current_player) {
             continue;
         }
     }
+}
+
+// converts the column number to its corresponding letter (1->A, 2->B, etc)
+char colnum_to_letter(int colnum) {
+    return (char)(colnum + 0x40);
+}
+
+void print_move(move_t move) {
+    char old_col = colnum_to_letter(move.old_loc.get_col());
+    int old_row = 11 - move.old_loc.get_row();
+    char new_col = colnum_to_letter(move.new_loc.get_col());
+    int new_row = 11 - move.new_loc.get_row();
+    char arrow_col = colnum_to_letter(move.arrow.get_col());
+    int arrow_row = 11 - move.arrow.get_row();
+
+    printf("%c%i - %c%i (%c%i)\n", old_col, old_row, new_col, new_row, arrow_col, arrow_row);
+}
+
+void bot_move_recognition(Board board, move_t move) {
+    char *buf[BUFLEN];
+    board.print();
+    printf("The AI made the following move:\n");
+    print_move(move);
+    printf("Press enter to continue.");
+    fflush(stdout);
+    read(0, buf, BUFLEN);
 }

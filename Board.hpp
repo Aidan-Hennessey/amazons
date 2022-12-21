@@ -167,6 +167,8 @@ class Board {
      */
     int evaluate();
 
+    int evaluate_verbose();
+
     /*
      * Evaluates the position that would result from the playing of a passed move
      *
@@ -177,6 +179,8 @@ class Board {
      *     an int - the evaluation of the resulting position
      */
     int evaluate(player_t player, move_t move);
+
+    int evaluate_verbose(player_t player, move_t move);
 
     /*
      * Helper for get_moves()

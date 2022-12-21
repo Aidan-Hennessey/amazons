@@ -156,6 +156,23 @@ int Board::evaluate() {
     return num_moves_diff + ALPHA * accesible_squares_diff;
 }
 
+int Board::evaluate_verbose() {
+    int left_moves = find_num_moves(left);
+    int right_moves = find_num_moves(right);
+    int num_moves_diff = left_moves - right_moves;
+    int left_accesible = count_accessible_squares(left);
+    int right_accessible = count_accessible_squares(right);
+    int accesible_squares_diff = left_accesible - right_accessible;
+    int eval = num_moves_diff + ALPHA * accesible_squares_diff;
+
+    printf("left moves: %i\n", left_moves);
+    printf("right moves: %i\n", right_moves);
+    printf("left access: %i\n", left_accesible);
+    printf("right access: %i\n", right_accessible);
+    printf("Final eval: %i\n", eval);
+    return eval;
+}
+
 /*
  * Evaluates the position that would result from the playing of a passed move
  *
@@ -169,6 +186,12 @@ int Board::evaluate(player_t player, move_t move) {
     Board edited_board(*this);
     edited_board.make_move(player, move);
     return edited_board.evaluate();
+}
+
+int Board::evaluate_verbose(player_t player, move_t move) {
+    Board edited_board(*this);
+    edited_board.make_move(player, move);
+    return edited_board.evaluate_verbose();
 }
 
 /*
@@ -258,12 +281,11 @@ move_t Board::best_move(player_t player) {
 
     for(const auto& move : moves) {
         int eval = this->evaluate(player, move);
-        if(first_better(eval, best_eval, player)) {
+        if(first_better(player, eval, best_eval)) {
             best_eval = eval;
             best_move = move;
         }
     }
-
     return best_move;
 }
 
@@ -275,6 +297,8 @@ move_t Board::best_move(player_t player) {
  *     board - the board on which to make a move
  * Return: none
  */
-void ai_move(Board& board, player_t player) {
-    assert(board.make_move(player, board.best_move(player)));
+move_t ai_move(Board& board, player_t player) {
+    move_t best_move = board.best_move(player);
+    assert(board.make_move(player, best_move));
+    return best_move;
 }

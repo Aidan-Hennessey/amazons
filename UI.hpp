@@ -68,4 +68,6 @@ void game_over(player_t loser);
  */
 void human_move(Board& board, player_t current_player);
 
+void bot_move_recognition(Board board, move_t move);
+
 #endif
