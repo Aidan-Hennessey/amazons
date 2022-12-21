@@ -25,6 +25,16 @@ Board::Board() {
     occupied |= right_amazons;
 }
 
+Board::Board(const Board& to_copy) {
+    // using |= not = so as to avoid ailiasing weirdness
+    this->occupied.reset();
+    this->occupied |= to_copy.occupied;
+    this->left_amazons.reset();
+    this->left_amazons |= to_copy.left_amazons;
+    this->right_amazons.reset();
+    this->right_amazons |= to_copy.right_amazons;
+}
+
 /*
  * helper for move_is_legal()
  * determines whether a chess queen could move from start to end
@@ -36,7 +46,7 @@ Board::Board() {
  * Returns:
  *     a bool - false if not a straight line or if there is an impediment, true otherwise
  */
-bool Board::queen_connected(Point start, Point end) {
+bool Board::queen_connected(Point start, Point end) const {
     int start_index = start.to_bbval();
     int incr;
 
@@ -82,21 +92,19 @@ bool Board::queen_connected(Point start, Point end) {
  *
  * Params:
  *     player - which player is trying to make the move (left or right)
- *     amazon_start - the location of the amazon the player is trying to move
- *     amazon_finish - the location the player wishes to move the amazon
- *     arrow - the location of the tile the player wishes to burn
+ *     move - the move to determine the legality of
  * Returns:
  *     a bool - true if the move is legal, false otherwise
  */
-bool Board::move_is_legal(player_t player, Point amazon_start, Point amazon_finish, Point arrow) {
+bool Board::move_is_legal(player_t player, move_t move) {
     bool legal;
-    int start_index = amazon_start.to_bbval();
+    int start_index = move.old_loc.to_bbval();
 
     if(!has_amazon(player, start_index)) // player does not have amazon there
         return false;
 
     occupied.flip(start_index); // so it doesn't think the queen's old position is blocking the arrow
-    legal = queen_connected(amazon_start, amazon_finish) && queen_connected(amazon_finish, arrow);
+    legal = queen_connected(move.old_loc, move.new_loc) && queen_connected(move.new_loc, move.arrow);
     occupied.flip(start_index); // so that this method doesn't mutate the board
     return legal;
 }
@@ -107,19 +115,17 @@ bool Board::move_is_legal(player_t player, Point amazon_start, Point amazon_fini
  *
  * Params:
  *     player - which player is trying to make the move (left or right)
- *     amazon_start - the location of the amazon the player is trying to move
- *     amazon_finish - the location the player wishes to move the amazon
- *     arrow - the location of the tile the player wishes to burn
+ *     move - the move the player is trying to make
  * Returns:
  *     a bool - true if the move is legal, false otherwise
  */
-bool Board::make_move(player_t player, Point amazon_start, Point amazon_finish, Point arrow) {
-    if(!move_is_legal(player, amazon_start, amazon_finish, arrow))
+bool Board::make_move(player_t player, move_t move) {
+    if(!move_is_legal(player, move))
         return false;
 
-    int start = amazon_start.to_bbval();
-    int finish = amazon_finish.to_bbval();
-    int to_burn = arrow.to_bbval();
+    int start = move.old_loc.to_bbval();
+    int finish = move.new_loc.to_bbval();
+    int to_burn = move.arrow.to_bbval();
 
     flip_amazon(player, start);
     flip_amazon(player, finish);

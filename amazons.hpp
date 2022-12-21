@@ -33,21 +33,27 @@ class Point {
         col = bb_index % 12;
     }
 
-    int get_row() {return row;}
-    int get_col() {return col;}
+    int get_row() const {return row;}
+    int get_col() const {return col;}
     void set_row(int new_row) {row = new_row;}
     void set_col(int new_col) {col = new_col;}
     void incr_row() {row++;}
     void incr_col() {col++;}
 
-    bool equals(Point other) {return row == other.get_row() && col == other.get_col();}
+    bool equals(Point other) const {return row == other.get_row() && col == other.get_col();}
 
     static inline int rowcol_to_val(int row, int col) {return 12 * row + col;}
 
     // calculates the index of the bitboard bit associated with the tile 
     // represented by this point
-    int to_bbval() {return rowcol_to_val(row, col);}
+    int to_bbval() const {return rowcol_to_val(row, col);}
 };
+
+typedef struct move {
+    Point old_loc;
+    Point new_loc;
+    Point arrow;
+} move_t;
 
 /*
  * Gets and makes moves from each player until someone can't go

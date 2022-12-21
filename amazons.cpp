@@ -3,6 +3,7 @@
 #include "amazons.hpp"
 #include "Board.hpp"
 #include "UI.hpp"
+#include "ai.hpp"
 
 #ifndef TESTS
 
@@ -18,6 +19,12 @@ int main() {
                 break;
             case 't':
                 play_game(false, false);
+                break;
+            case 'f':
+                play_game(false, true);
+                break;
+            case 's':
+                play_game(true, false);
                 break;
             default:
                 exit_app();
@@ -44,7 +51,7 @@ void play_game(bool left_ai, bool right_ai) {
         board.print();
 
         if((current_player == left) ? left_ai : right_ai) { // if it's an ai's turn
-            //TODO
+            ai_move(board, current_player);
         } else { // it's a human's turn
             human_move(board, current_player);
         }

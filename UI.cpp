@@ -161,6 +161,8 @@ int move_from_user_input(char *token, Point& location) {
 
     row = 11 - atoi(&token[1]); // flipping from 1=bottom to 1=top
 
+    printf("row: %i    col: %i\n", row, col);
+
     if(row < 1 || row > 10) return -1;
     if(col < 1 || col > 10) return -1;
 
@@ -184,9 +186,7 @@ void human_move(Board& board, player_t current_player) {
     char buf[BUFLEN] = {};
     char *tokens[BUFLEN/2];
     int num_tokens;
-    Point old_loc;
-    Point new_loc;
-    Point arrow;
+    move_t move;
 
     while(true) {
         // get move from user
@@ -199,22 +199,23 @@ void human_move(Board& board, player_t current_player) {
         // parse input
         num_tokens = parse(buf, tokens);
         if(num_tokens != 3) {
+            printf("num_tokens: %i\n", num_tokens);
             printf("Invalid input. Please try again.\n");
             continue;
         }
 
         // convert input to point objects
-        if(move_from_user_input(tokens[0], old_loc) || 
-            move_from_user_input(tokens[1], new_loc) ||
-            move_from_user_input(tokens[2], arrow)) { 
+        if(move_from_user_input(tokens[0], move.old_loc) || 
+            move_from_user_input(tokens[1], move.new_loc) ||
+            move_from_user_input(tokens[2], move.arrow)) { 
             // if 1 or more failed
             printf("Invalid input. Please try again.\n");
             continue;
         }
 
         // make user's move
-        if(board.make_move(current_player, old_loc, new_loc, arrow))
-            break;
+        if(board.make_move(current_player, move))
+            return;
         else {
             printf("That is not a legal move. Please try again.\n");
             continue;
