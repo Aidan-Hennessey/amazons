@@ -12,7 +12,7 @@ To compile, run the command "make amazons" in the command line. This will genera
 
 # Running
 
-To run, simply run ./amazons in the command line. This will bring you to the title screen, from which point you can decide what you would like to do.
+To run, simply run ./amazons in the command line. This will bring you to the title screen, from which point you can decide what you would like to do. You can also include the flag --verbose to make the program print an AI evaluation of the position after each move.
 
 # Potential Improvements
 
