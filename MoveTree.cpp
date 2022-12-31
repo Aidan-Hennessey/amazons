@@ -3,10 +3,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <vector>
-#include <optional>
+#include <unordered_set>
 #include "amazons.hpp"
 #include "Board.hpp"
-#include "ai.hpp"
 #include "MoveTree.hpp"
 
 /*

@@ -5,13 +5,9 @@
 #include "amazons.hpp"
 #include "Board.hpp"
 #include "UI.hpp"
-#include "ai.hpp"
 #include "MoveTree.hpp"
 
-bool times_up;
-pthread_rwlock_t times_up_lock = PTHREAD_RWLOCK_INITIALIZER;
-
-int memory_allocated = 0;
+// This file containts the main function for the program
 
 #ifndef TESTS
 
@@ -21,7 +17,7 @@ int main(int argc, char *argv[]) {
     char action;
     bool print_eval = false;
 
-    if(argc > 1 && strcmp(argv[1], "--v") == 0)
+    if(argc > 1 && strcmp(argv[1], "--verbose") == 0)
         print_eval = true;
 
     while(true) {
@@ -52,6 +48,20 @@ int main(int argc, char *argv[]) {
 }
 
 #endif
+
+/*
+ * The ai makes a move
+ *
+ * Params:
+ *     player - which player the ai is moving for
+ *     board - the board on which to make a move
+ * Return: none
+ */
+move_t ai_move(Board& board, player_t player) {
+    MoveTree tree(board, player);
+
+    return tree.make_move(board);
+}
 
 /*
  * Gets and makes moves from each player until someone can't go

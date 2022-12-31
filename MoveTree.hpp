@@ -7,6 +7,9 @@
 #include "amazons.hpp"
 #include "Board.hpp"
 
+#define ROLLOUTS 10000
+#define SEARCH_DEPTH 20
+
 class MoveTree {
     MoveTree *parent;
     move_t prev_move;

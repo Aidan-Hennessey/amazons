@@ -8,9 +8,11 @@
 
 #define has_amazon(p, v) (p ? left_amazons[v] : right_amazons[v])
 #define flip_amazon(p, v) (p ? left_amazons.flip(v) : right_amazons.flip(v))
-// #define abs(a) ((a < 0) ? -a : a)
-// #define max(a, b) ((a > b) ? a : b)
-// #define min(a, b) ((a < b) ? a : b)
+
+#define ALPHA 100 // empirically chosen parameter
+#define BIGNUM 999999 //greater than any possible evaluation value
+#define worst_eval(p) (p ? -BIGNUM : BIGNUM)
+#define first_better(p, a, b) (p ? a > b : a < b)
 
 /*
  * the board, internally represented as 3 bitboards - one for occupied squares, 
@@ -23,8 +25,9 @@ class Board {
 
     public:
     //////////////////  CONSTRUCTORS  /////////////////////
-    Board();
-    Board(const Board& to_copy);
+
+    Board(); // initializes board to start position
+    Board(const Board& to_copy); // copy constructor
 
     //////////////////  GENERAL METHODS  //////////////////
 

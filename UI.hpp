@@ -1,6 +1,8 @@
 #ifndef UI_H
 #define UI_H
 
+// This file contains declarations of various UI related functions
+
 #include "Board.hpp"
 #include "amazons.hpp"
 

@@ -1,11 +1,20 @@
 #ifndef AMAZONS_H
 #define AMAZONS_H
+
 // This is a header file with some micscellaneous types
 // that are used throughout the project
 
 #include <stdlib.h>
 
-#define BOARDWIDTH 10
+#ifdef TINY
+  #define BOARDWIDTH 6
+#else
+  #ifdef SMALL
+    #define BOARDWIDTH 8
+  #else
+    #define BOARDWIDTH 10
+  #endif
+#endif
 
 #define BBWIDTH (BOARDWIDTH + 2)
 #define SETSIZE (BBWIDTH * BBWIDTH)
@@ -79,26 +88,4 @@ typedef struct move {
  */
 void play_game(bool left_ai, bool right_ai, bool print_eval);
 
-extern bool times_up;
-extern pthread_rwlock_t times_up_lock;
-extern int memory_allocated;
-
 #endif
-/*
-on 1 rollout:
-10 nodes rolled through
-each one allocates ~2000 children
-In total: 20,000 nodes
-
-400 rollouts x 20000 nodes = 8,000,000 nodes
-8,000,000 nodes x 144 bytes > 1 gigabyte
-
-So instead:
-on 1 rollout:
-10 nodes rolled through
-they DO NOT allocate children
-In total: 10 nodes!!
-
-10000 rollouts x 10 nodes = 100,000 nodes
-100,000 nodes x 144 bytes = 1.5 megabytes :)
-*/

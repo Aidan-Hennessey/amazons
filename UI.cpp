@@ -1,3 +1,5 @@
+// This file contains definitions of UI related functions
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -36,10 +38,13 @@ char start_screen() {
 
     // get char
     char buf[BUFLEN];
-    fgets(buf, BUFLEN - 1, stdin);
+    if(fgets(buf, BUFLEN - 1, stdin) == NULL) {
+        fprintf(stderr, "Uh oh! Either you pressed ctrl+D or fgets errored\n");
+    }
     return buf[0];
 }
 
+// prints a horizontal line dividing 2 rows of the board
 void print_boarder_line() {
     printf("  +");
     for(int i=0; i < BOARDWIDTH; i++) {
@@ -69,6 +74,7 @@ void print_board(char board[BOARDWIDTH][BOARDWIDTH]) {
         printf("   %c", 'A' + (char)i);
     }
     printf("\n");
+
     //printf("  +---+---+---+---+---+---+---+---+---+---+\n"); //top of board
     print_boarder_line();
 
@@ -77,6 +83,7 @@ void print_board(char board[BOARDWIDTH][BOARDWIDTH]) {
         for(int j=0; j < BOARDWIDTH; j++) {
             printf(" %c |", board[i][j]);
         }
+
         //printf("\n  +---+---+---+---+---+---+---+---+---+---+\n");
         printf("\n");
         print_boarder_line();
@@ -130,7 +137,10 @@ void game_over(player_t loser) {
     printf("  \\_/ \\_/ \\___/|_| |_(_)\n\n\n");
 
     printf("Press enter to return to the home screen\n\n\n");
-    read(0, buf, BUFLEN);
+    if(read(0, buf, BUFLEN) < 0) {
+        perror("read");
+        exit(1);
+    }
 }
 
 /*
@@ -212,10 +222,12 @@ move_t human_move(Board& board, player_t current_player) {
     while(true) {
         // get move from user
         printf("Player %i, please enter your move.\n", (current_player == LEFT) ? 1 : 2);
-        printf("Format: start - end (arrow). Example: 'A4 - A7 (C5)'.\n");
+        printf("Format: start end arrow. Example: 'a4 a7 c5'.\n");
         printf("Your move: ");
         fflush(stdout);
-        fgets(buf, BUFLEN - 1, stdin);
+        if(fgets(buf, BUFLEN - 1, stdin) == NULL) {
+            fprintf(stderr, "Uh oh! Either you pressed ctrl+D or fgets errored\n");
+        }
 
         // parse input
         num_tokens = parse(buf, tokens);
@@ -281,7 +293,10 @@ void bot_move_recognition(Board board, move_t move) {
     print_move(move);
     printf("Press enter to continue.");
     fflush(stdout);
-    read(0, buf, BUFLEN);
+    if(read(0, buf, BUFLEN) < 0) {
+        perror("read");
+        exit(1);
+    }
 }
 
 // prints the rules of the game
@@ -305,5 +320,8 @@ void print_rules() {
 
     char buf[BUFLEN];
     printf("\n\nTo return to the home screen, press enter.\n");
-    read(0, buf, BUFLEN);
+    if(read(0, buf, BUFLEN) < 0) {
+        perror("read");
+        exit(1);
+    }
 }
