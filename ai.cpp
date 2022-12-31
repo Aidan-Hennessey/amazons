@@ -1,21 +1,11 @@
-// for each move we're considering:
-// search all its children ~500
-// mark the top 20, 20, 10, 10, 5, 5 as moves we're considering (for depth d)
-// 
-
-// 
-
-// Things that could factor into heuristic:
-// union-find reachable squares for me vs for opponent
-// number of possible moves for me vs for opponent
-// ^^ sum of squares across queens of either of those
-// weight them by a function of how many turns we've had
 #include <bitset>
 #include <list>
+#include <vector>
 #include <assert.h>
 #include "Board.hpp"
 #include "amazons.hpp"
 #include "ai.hpp"
+#include "MoveTree.hpp"
 
 /*
  * Helper for evaluate
@@ -33,7 +23,7 @@
  */
 int Board::num_queen_connections(int index) {
     int count = 0;
-    int incrs[8] = {11, 12, 13, 1, -11, -12, -13, -1};
+    int incrs[8] = INCRS_INIT;
 
     for(int i=0; i<8; i++) {
         int j;
@@ -55,7 +45,7 @@ int Board::num_queen_connections(int index) {
  */
 int Board::count_amazon_moves(int index) {
     int count = 0;
-    int incrs[8] = {11, 12, 13, 1, -11, -12, -13, -1};
+    int incrs[8] = INCRS_INIT;
     int current;
 
     for(int i=0; i<8; i++) {
@@ -87,7 +77,7 @@ int Board::count_amazon_moves(int index) {
 int Board::find_num_moves(player_t player) {
     int count = 0;
 
-    for(int i=13; i<=130;i++) {
+    for(int i=TOP_LEFT; i<=BOTTOM_RIGHT; i++) {
         if(has_amazon(player, i)) {
             count += count_amazon_moves(i);
         }
@@ -107,12 +97,12 @@ int Board::find_num_moves(player_t player) {
  *     an int - the count of how many squares are accessible to this player
  */
 int Board::count_accessible_squares(player_t player) {
-    std::bitset<144> accesible;
-    std::bitset<144> fresh;
-    std::bitset<144> newly_accesible;
-    int incrs[8] = {11, 12, 13, 1, -11, -12, -13, -1};
+    std::bitset<SETSIZE> accesible;
+    std::bitset<SETSIZE> fresh;
+    std::bitset<SETSIZE> newly_accesible;
+    int incrs[8] = INCRS_INIT;
 
-    for(int i=13; i<=130;i++) {
+    for(int i=TOP_LEFT; i<=BOTTOM_RIGHT; i++) {
         if(has_amazon(player, i)) {
             fresh.set(i);
         }
@@ -121,7 +111,7 @@ int Board::count_accessible_squares(player_t player) {
     accesible |= fresh;
 
     while(fresh.any()) { // while we still have squares to search from
-        for(int i=13; i<=130; i++) {
+        for(int i=TOP_LEFT; i<=BOTTOM_RIGHT; i++) {
             if(fresh[i]) { // for each fresh square
                 for(int j=0; j<8; j++) { // for each of its neighbors
                     if(!accesible[i + incrs[j]] && // if it's not already added
@@ -150,18 +140,19 @@ int Board::count_accessible_squares(player_t player) {
  *              the more negative, the better for right
  */
 int Board::evaluate() {
-    int num_moves_diff = find_num_moves(left) - find_num_moves(right);
-    int accesible_squares_diff = count_accessible_squares(left) - count_accessible_squares(right);
+    int num_moves_diff = find_num_moves(LEFT) - find_num_moves(RIGHT);
+    int accesible_squares_diff = count_accessible_squares(LEFT) - count_accessible_squares(RIGHT);
 
     return num_moves_diff + ALPHA * accesible_squares_diff;
 }
 
+// same as evaluate(), but prints additional info to stdout
 int Board::evaluate_verbose() {
-    int left_moves = find_num_moves(left);
-    int right_moves = find_num_moves(right);
+    int left_moves = find_num_moves(LEFT);
+    int right_moves = find_num_moves(RIGHT);
     int num_moves_diff = left_moves - right_moves;
-    int left_accesible = count_accessible_squares(left);
-    int right_accessible = count_accessible_squares(right);
+    int left_accesible = count_accessible_squares(LEFT);
+    int right_accessible = count_accessible_squares(RIGHT);
     int accesible_squares_diff = left_accesible - right_accessible;
     int eval = num_moves_diff + ALPHA * accesible_squares_diff;
 
@@ -183,14 +174,13 @@ int Board::evaluate_verbose() {
  *     an int - the evaluation of the resulting position
  */
 int Board::evaluate(player_t player, move_t move) {
-    Board edited_board(*this);
-    edited_board.make_move(player, move);
+    Board edited_board = make_move_immutably(player, move);
     return edited_board.evaluate();
 }
 
+// same as evaluate(), but prints additional info to stdout
 int Board::evaluate_verbose(player_t player, move_t move) {
-    Board edited_board(*this);
-    edited_board.make_move(player, move);
+    Board edited_board = make_move_immutably(player, move);
     return edited_board.evaluate_verbose();
 }
 
@@ -206,7 +196,7 @@ int Board::evaluate_verbose(player_t player, move_t move) {
  */
 std::list<Point> Board::queen_reachables(Point start) {
     std::list<Point> options;
-    int incrs[8] = {11, 12, 13, 1, -11, -12, -13, -1};
+    int incrs[8] = INCRS_INIT;
     int start_index = start.to_bbval();
     int current_index;
 
@@ -225,12 +215,12 @@ std::list<Point> Board::queen_reachables(Point start) {
  * Params:
  *     player - the player whose amazons we want
  * Return:
- *     a list of points of length 4 - the player's 4 amazons
+ *     a list of points - the player's amazons (length 4 for 10x10 board)
  */
 std::list<Point> Board::get_amazons(player_t player) {
     std::list<Point> amazons;
 
-    for(int i=13; i<=130; i++) {
+    for(int i=TOP_LEFT; i<=BOTTOM_RIGHT; i++) {
         if(has_amazon(player, i)) {
             amazons.push_back(Point(i));
         }
@@ -246,8 +236,8 @@ std::list<Point> Board::get_amazons(player_t player) {
  * Returns:
  *     a list of move_t objects - every single move the player can make
  */
-std::list<move_t> Board::get_moves(player_t player) {
-    std::list<move_t> moves;
+std::vector<move_t> Board::get_moves(player_t player) {
+    std::vector<move_t> moves;
     std::list<Point> amazons = get_amazons(player);
     std::list<Point> new_loc_options;
     std::list<Point> arrow_options;
@@ -275,7 +265,7 @@ std::list<move_t> Board::get_moves(player_t player) {
  *     a move_t - the ai's best guess at the optimal move for player
  */
 move_t Board::best_move(player_t player) {
-    std::list<move_t> moves = this->get_moves(player);
+    std::vector<move_t> moves = this->get_moves(player);
     int best_eval = worst_eval(player);
     move_t best_move;
 
@@ -298,7 +288,7 @@ move_t Board::best_move(player_t player) {
  * Return: none
  */
 move_t ai_move(Board& board, player_t player) {
-    move_t best_move = board.best_move(player);
-    assert(board.make_move(player, best_move));
-    return best_move;
+    MoveTree tree(board, player);
+
+    return tree.make_move(board);
 }

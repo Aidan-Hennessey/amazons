@@ -32,7 +32,7 @@ char start_screen();
  * Returns:
  *     None
  */
-void print_board(char board[10][10]);
+void print_board(char board[BOARDWIDTH][BOARDWIDTH]);
 
 // Exits the app from the title screen
 void exit_app();
@@ -66,8 +66,19 @@ void game_over(player_t loser);
  *     current_player - whose turn it is (player1/left or player2/right)
  * Return: None
  */
-void human_move(Board& board, player_t current_player);
+move_t human_move(Board& board, player_t current_player);
 
+/*
+ * Prompts the user to recognize that the AI has made a move
+ *
+ * Params:
+ *     board - the game board now that the AI has made a move
+ *     move - the move the AI made
+ * Return: none
+ */
 void bot_move_recognition(Board board, move_t move);
+
+// prints the rules of the game
+void print_rules();
 
 #endif

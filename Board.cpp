@@ -1,24 +1,44 @@
 #include <bitset>
+#include <assert.h>
+#include <math.h>
+#include <stdlib.h>
 #include "amazons.hpp"
 #include "Board.hpp"
 #include "UI.hpp"
 
 Board::Board() {
     //fill border with 1's
-    for(int i=0; i < 144; i++) {
-        if(i < 12 || i >= 132 || i % 12 == 0 || i % 12 == 11) //is on border
+    for(int i=0; i < SETSIZE; i++) {
+        if(i < BBWIDTH || i >= SETSIZE - BBWIDTH || i % BBWIDTH == 0 || i % BBWIDTH == BBWIDTH - 1) //is on border
             occupied.set(i);
-        else(occupied.reset(i));
+        else
+            occupied.reset(i);
     }
     //fill left and right starting positions
-    left_amazons.set(16);
-    left_amazons.set(19);
-    left_amazons.set(49);
-    left_amazons.set(58);
-    right_amazons.set(85);
-    right_amazons.set(94);
-    right_amazons.set(124);
-    right_amazons.set(127);
+    if(BOARDWIDTH == 10) {
+        left_amazons.set(16);
+        left_amazons.set(19);
+        left_amazons.set(49);
+        left_amazons.set(58);
+        right_amazons.set(85);
+        right_amazons.set(94);
+        right_amazons.set(124);
+        right_amazons.set(127);
+    }
+    if(BOARDWIDTH == 8) {
+        left_amazons.set(21);
+        left_amazons.set(38);
+        left_amazons.set(15);
+        right_amazons.set(61);
+        right_amazons.set(78);
+        right_amazons.set(84);
+    }
+    if(BOARDWIDTH == 6) {
+        left_amazons.set(10);
+        left_amazons.set(22);
+        right_amazons.set(53);
+        right_amazons.set(41);
+    }
 
     //include amazons in occupied
     occupied |= left_amazons;
@@ -56,26 +76,26 @@ bool Board::queen_connected(Point start, Point end) const {
     if((abs(hori_move_dist)) != (abs(vert_move_dist)) && hori_move_dist * vert_move_dist != 0)
         return false; // path is not straight line
 
-    int dist = max(abs(hori_move_dist), abs(vert_move_dist));
+    int dist = std::max(abs(hori_move_dist), abs(vert_move_dist));
 
     if(hori_move_dist > 0 && vert_move_dist > 0)
-        incr = 13;
+        incr = 1 + BBWIDTH;
     if(hori_move_dist > 0 && vert_move_dist == 0)
         incr = 1;
     if(hori_move_dist > 0 && vert_move_dist < 0)
-        incr = -11;
+        incr = 1 - BBWIDTH;
     if(hori_move_dist == 0 && vert_move_dist > 0)
-        incr = 12;
+        incr = BBWIDTH;
     if(hori_move_dist == 0 && vert_move_dist == 0)
         return false; // start and end are the same square
     if(hori_move_dist == 0 && vert_move_dist < 0)
-        incr = -12;
+        incr = -BBWIDTH;
     if(hori_move_dist < 0 && vert_move_dist > 0)
-        incr = 11;
+        incr = -1 + BBWIDTH;
     if(hori_move_dist < 0 && vert_move_dist == 0)
         incr = -1;
     if(hori_move_dist < 0 && vert_move_dist < 0)
-        incr = -13;
+        incr = -1 - BBWIDTH;
 
     for(int i=1; i <= dist; i++) {
         if(occupied[start_index + incr * i]) {
@@ -137,6 +157,24 @@ bool Board::make_move(player_t player, move_t move) {
 }
 
 /*
+ * Returns the board resulting from making a certain move on this board,
+ * without altering this board.
+ *
+ * Precondition: the move passed is a legal one
+ *
+ * Params:
+ *     player - which player is trying to make the move (left or right)
+ *     move - the move the player is trying to make
+ * Returns:
+ *     a Board object representing the board after the move is played
+ */
+Board Board::make_move_immutably(player_t player, move_t move) {
+    Board moved_board(*this);
+    assert(moved_board.make_move(player, move));
+    return moved_board;
+}
+
+/*
  * Determines if the passed player has any legal moves
  *
  * Params:
@@ -146,9 +184,9 @@ bool Board::make_move(player_t player, move_t move) {
  */
 bool Board::no_moves(player_t player) {
     // the increments to get to adjacent squares
-    int incrs[8] = {-13, -12, -11, -1, 1, 11, 12, 13}; 
+    int incrs[8] = INCRS_INIT; 
 
-    for(int i=13; i<=130; i++) // for each square on the board
+    for(int i=TOP_LEFT; i<=BOTTOM_RIGHT; i++) // for each square on the board
         if(has_amazon(player, i)) // if this player has an amazon there
             for(int j=0; j < 8; j++) // look at all the adjacent squares
                 if(!occupied[i+incrs[j]]) // if one is unoccupied
@@ -181,10 +219,10 @@ tile_state_t Board::get_tile_type(int index) {
  * Returns: none
  */
 void Board::print() {
-    char non_bit_board[10][10];
+    char non_bit_board[BOARDWIDTH][BOARDWIDTH];
 
-    for(int i=1; i<=10; i++) {
-        for(int j=1; j<=10; j++) {
+    for(int i=1; i<=BOARDWIDTH; i++) {
+        for(int j=1; j<=BOARDWIDTH; j++) {
             non_bit_board[i-1][j-1] = tile_icon(this->get_tile_type(Point::rowcol_to_val(i, j)));
         }
     }

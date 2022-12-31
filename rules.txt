@@ -1,0 +1,12 @@
+The Game of the Amazons is a game played on a 10x10 board by two players who 
+take alternating turns. The game ends when it is a player's turn but there are 
+no legal moves available to the player.
+
+Each player has 4 amazons. Each turn, a player moves an amazon, and then has 
+that amazon shoot an arrow. The same amazon which just moved must be the one to 
+shoot an arrow. When an amazon shoots an arrow, whichever square the arrow 
+lands on is burned off the board. Burnt squares cannot be used for the rest of 
+the game.
+
+Both the amazon and the arrow move like a queen does in chess. Like a queen,
+neither can pass over other amazons or burned squares.

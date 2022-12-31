@@ -14,6 +14,8 @@ To compile, run the command "make amazons" in the command line. This will genera
 
 To run, simply run ./amazons in the command line. This will bring you to the title screen, from which point you can decide what you would like to do. You can also include the flag --verbose to make the program print an AI evaluation of the position after each move.
 
+NOTE: The program looks best when your terminal window displays 30 lines at a time.
+
 # Potential Improvements
 
 Writing a strong AI for this game is challenging for two main reasons:

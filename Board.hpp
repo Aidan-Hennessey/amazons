@@ -3,21 +3,23 @@
 
 #include <bitset>
 #include <list>
+#include <vector>
 #include "amazons.hpp"
 
-#define has_amazon(p, v) ((p == left) ? left_amazons[v] : right_amazons[v])
-#define flip_amazon(p, v) ((p == left) ? left_amazons.flip(v) : right_amazons.flip(v))
-#define abs(a) ((a < 0) ? -a : a)
-#define max(a, b) ((a > b) ? a : b)
+#define has_amazon(p, v) (p ? left_amazons[v] : right_amazons[v])
+#define flip_amazon(p, v) (p ? left_amazons.flip(v) : right_amazons.flip(v))
+// #define abs(a) ((a < 0) ? -a : a)
+// #define max(a, b) ((a > b) ? a : b)
+// #define min(a, b) ((a < b) ? a : b)
 
 /*
  * the board, internally represented as 3 bitboards - one for occupied squares, 
  * and one for each player's set of amazons
  */
 class Board {
-    std::bitset<144> occupied;
-    std::bitset<144> left_amazons;
-    std::bitset<144> right_amazons;
+    std::bitset<SETSIZE> occupied;
+    std::bitset<SETSIZE> left_amazons;
+    std::bitset<SETSIZE> right_amazons;
 
     public:
     //////////////////  CONSTRUCTORS  /////////////////////
@@ -65,6 +67,20 @@ class Board {
      *     a bool - true if the move is legal, false otherwise
      */
     bool make_move(player_t player, move_t move);
+
+    /*
+     * Returns the board resulting from making a certain move on this board,
+     * without altering this board.
+     *
+     * Precondition: the move passed is a legal one
+     *
+     * Params:
+     *     player - which player is trying to make the move (left or right)
+     *     move - the move the player is trying to make
+     * Returns:
+     *     a Board object representing the board after the move is played
+     */
+    Board make_move_immutably(player_t player, move_t move);
 
     /*
      * Determines if the passed player has any legal moves
@@ -167,6 +183,7 @@ class Board {
      */
     int evaluate();
 
+    // same as evaluate(), but prints additional info to stdout
     int evaluate_verbose();
 
     /*
@@ -180,6 +197,7 @@ class Board {
      */
     int evaluate(player_t player, move_t move);
 
+    // same as evaluate(), but prints additional info to stdout
     int evaluate_verbose(player_t player, move_t move);
 
     /*
@@ -213,7 +231,7 @@ class Board {
      * Returns:
      *     a list of move_t objects - every single move the player can make
      */
-    std::list<move_t> get_moves(player_t player);
+    std::vector<move_t> get_moves(player_t player);
 
     /*
      * determines the best next move for a player in the current position

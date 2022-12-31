@@ -5,7 +5,20 @@
 
 #include <stdlib.h>
 
-typedef enum {left, right} player_t;
+#define BOARDWIDTH 10
+
+#define BBWIDTH (BOARDWIDTH + 2)
+#define SETSIZE (BBWIDTH * BBWIDTH)
+#define INCRS_INIT {-BBWIDTH - 1, -BBWIDTH, -BBWIDTH + 1, \
+                    -1, 1, \
+                    BBWIDTH - 1, BBWIDTH, BBWIDTH + 1}
+#define TOP_LEFT (BBWIDTH + 1)
+#define BOTTOM_RIGHT (BBWIDTH * (BBWIDTH - 1) - 2)
+
+typedef bool player_t;
+
+#define LEFT true
+#define RIGHT false
 
 typedef enum {lamazon, ramazon, burnt, open} tile_state_t;
 
@@ -29,8 +42,8 @@ class Point {
 
     // calculates the coordinates associated with a bitboard index
     Point(int bb_index) {
-        row = bb_index / 12;
-        col = bb_index % 12;
+        row = bb_index / BBWIDTH;
+        col = bb_index % BBWIDTH;
     }
 
     int get_row() const {return row;}
@@ -42,7 +55,7 @@ class Point {
 
     bool equals(Point other) const {return row == other.get_row() && col == other.get_col();}
 
-    static inline int rowcol_to_val(int row, int col) {return 12 * row + col;}
+    static inline int rowcol_to_val(int row, int col) {return BBWIDTH * row + col;}
 
     // calculates the index of the bitboard bit associated with the tile 
     // represented by this point
@@ -61,7 +74,31 @@ typedef struct move {
  * Params:
  *     left_ai - whether the left player is an AI
  *     right_ai - whether the right player is an AI
+ *     print_eval - whether to print an AI evaluation of the position
+ * Return: none
  */
-void play_game(bool left_ai, bool right_ai);
+void play_game(bool left_ai, bool right_ai, bool print_eval);
+
+extern bool times_up;
+extern pthread_rwlock_t times_up_lock;
+extern int memory_allocated;
 
 #endif
+/*
+on 1 rollout:
+10 nodes rolled through
+each one allocates ~2000 children
+In total: 20,000 nodes
+
+400 rollouts x 20000 nodes = 8,000,000 nodes
+8,000,000 nodes x 144 bytes > 1 gigabyte
+
+So instead:
+on 1 rollout:
+10 nodes rolled through
+they DO NOT allocate children
+In total: 10 nodes!!
+
+10000 rollouts x 10 nodes = 100,000 nodes
+100,000 nodes x 144 bytes = 1.5 megabytes :)
+*/

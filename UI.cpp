@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ncurses.h>
 #include "amazons.hpp"
 #include "Board.hpp"
 #include "UI.hpp"
@@ -41,6 +40,14 @@ char start_screen() {
     return buf[0];
 }
 
+void print_boarder_line() {
+    printf("  +");
+    for(int i=0; i < BOARDWIDTH; i++) {
+        printf("---+");
+    }
+    printf("\n");
+}
+
 /*
  * Prints the board to the screen
  *
@@ -50,20 +57,29 @@ char start_screen() {
  * Returns:
  *     None
  */
-void print_board(char board[10][10]) {
+void print_board(char board[BOARDWIDTH][BOARDWIDTH]) {
     printf("key:\n");
     printf("%c - player 1 amazon\n", tile_icon(lamazon));
     printf("%c - player 2 amazon\n", tile_icon(ramazon));
     printf("%c - burnt square\n\n", tile_icon(burnt));
 
-    printf("    A   B   C   D   E   F   G   H   I   J\n");
-    printf("  +---+---+---+---+---+---+---+---+---+---+\n"); //top of board
-    for(int i=1; i <= 10; i++) {
-        printf("%2i|", 11 - i);
-        for(int j=1; j <= 10; j++) {
-            printf(" %c |", board[i-1][j-1]);
+    //printf("    A   B   C   D   E   F   G   H   I   J\n");
+    printf(" ");
+    for(int i=0; i < BOARDWIDTH; i++) {
+        printf("   %c", 'A' + (char)i);
+    }
+    printf("\n");
+    //printf("  +---+---+---+---+---+---+---+---+---+---+\n"); //top of board
+    print_boarder_line();
+
+    for(int i=0; i < BOARDWIDTH; i++) {
+        printf("%2i|", BOARDWIDTH - i);
+        for(int j=0; j < BOARDWIDTH; j++) {
+            printf(" %c |", board[i][j]);
         }
-        printf("\n  +---+---+---+---+---+---+---+---+---+---+\n");
+        //printf("\n  +---+---+---+---+---+---+---+---+---+---+\n");
+        printf("\n");
+        print_boarder_line();
     }
 }
 
@@ -93,7 +109,7 @@ void exit_app() {
 void game_over(player_t loser) {
     char buf[BUFLEN];
 
-    if(loser == left) { //player 2 won
+    if(loser == LEFT) { //player 2 won
         printf("\n\n                                       ____\n");
         printf("   ___ | | __ _ __    __ ___  _ __    |__  \\\n");
         printf("  /   \\| |/ _` |\\ \\  / // _ \\| `__|      | /\n");
@@ -166,10 +182,10 @@ int move_from_user_input(char *token, Point& location) {
         col = int(token[0]) - 0x40; // A->1, B->2, etc
     }
 
-    row = 11 - atoi(&token[1]); // flipping from 1=bottom to 1=top
+    row = BOARDWIDTH + 1 - atoi(&token[1]); // flipping from 1=bottom to 1=top
 
-    if(row < 1 || row > 10) return -1;
-    if(col < 1 || col > 10) return -1;
+    if(row < 1 || row > BOARDWIDTH) return -1;
+    if(col < 1 || col > BOARDWIDTH) return -1;
 
     location.set_row(row);
     location.set_col(col);
@@ -187,7 +203,7 @@ int move_from_user_input(char *token, Point& location) {
  *     current_player - whose turn it is (player1/left or player2/right)
  * Return: None
  */
-void human_move(Board& board, player_t current_player) {
+move_t human_move(Board& board, player_t current_player) {
     char buf[BUFLEN] = {};
     char *tokens[BUFLEN/2];
     int num_tokens;
@@ -195,7 +211,7 @@ void human_move(Board& board, player_t current_player) {
 
     while(true) {
         // get move from user
-        printf("Player %i, please enter your move.\n", (current_player == left) ? 1 : 2);
+        printf("Player %i, please enter your move.\n", (current_player == LEFT) ? 1 : 2);
         printf("Format: start - end (arrow). Example: 'A4 - A7 (C5)'.\n");
         printf("Your move: ");
         fflush(stdout);
@@ -219,7 +235,7 @@ void human_move(Board& board, player_t current_player) {
 
         // make user's move
         if(board.make_move(current_player, move))
-            return;
+            return move;
         else {
             printf("That is not a legal move. Please try again.\n");
             continue;
@@ -232,17 +248,32 @@ char colnum_to_letter(int colnum) {
     return (char)(colnum + 0x40);
 }
 
+/*
+ * Prints a neatly formmated move to the screen
+ *
+ * Params:
+ *     move - the move to print
+ * Returns: none - just prints to stdout
+ */
 void print_move(move_t move) {
     char old_col = colnum_to_letter(move.old_loc.get_col());
-    int old_row = 11 - move.old_loc.get_row();
+    int old_row = BOARDWIDTH + 1 - move.old_loc.get_row();
     char new_col = colnum_to_letter(move.new_loc.get_col());
-    int new_row = 11 - move.new_loc.get_row();
+    int new_row = BOARDWIDTH + 1 - move.new_loc.get_row();
     char arrow_col = colnum_to_letter(move.arrow.get_col());
-    int arrow_row = 11 - move.arrow.get_row();
+    int arrow_row = BOARDWIDTH + 1 - move.arrow.get_row();
 
     printf("%c%i - %c%i (%c%i)\n", old_col, old_row, new_col, new_row, arrow_col, arrow_row);
 }
 
+/*
+ * Prompts the user to recognize that the AI has made a move
+ *
+ * Params:
+ *     board - the game board now that the AI has made a move
+ *     move - the move the AI made
+ * Return: none
+ */
 void bot_move_recognition(Board board, move_t move) {
     char *buf[BUFLEN];
     board.print();
@@ -250,5 +281,29 @@ void bot_move_recognition(Board board, move_t move) {
     print_move(move);
     printf("Press enter to continue.");
     fflush(stdout);
+    read(0, buf, BUFLEN);
+}
+
+// prints the rules of the game
+void print_rules() {
+    printf("\n\n");
+
+    char ch;
+    FILE *rules = fopen("rules.txt", "r");
+ 
+    if (rules == NULL) {
+        printf("rules file can't be opened :(\n\n");
+    }
+ 
+    ch = fgetc(rules);
+    while (ch != EOF) {
+        printf("%c", ch);
+        ch = fgetc(rules);
+    }
+ 
+    fclose(rules);
+
+    char buf[BUFLEN];
+    printf("\n\nTo return to the home screen, press enter.\n");
     read(0, buf, BUFLEN);
 }
