@@ -1,6 +1,6 @@
 The Game of the Amazons is a game played on a 10x10 board by two players who 
 take alternating turns. The game ends when it is a player's turn but there are 
-no legal moves available to the player.
+no legal moves available to the player. The player who cannot move loses.
 
 Each player has 4 amazons. Each turn, a player moves an amazon, and then has 
 that amazon shoot an arrow. The same amazon which just moved must be the one to 
